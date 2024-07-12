@@ -32,6 +32,23 @@ pipeline{
 					}
 				}
 			}
-		}		
+		}
+                stage('Push to Dockerhub'){
+			steps{
+				script {
+					try {
+						withCredentials([usernamePassword(credentialsId: 'my-docker-hub-credentialsId', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) { 
+							docker.withRegistry('https://index.docker.io/v1/') {
+								sh "echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin docker.io"
+								docker.image(DOCKER_IMAGE_NAME).push(IMAGE_TAG)
+							}
+						}
+					} catch (Exception e) {
+						echo "Failed to push Docker image to registry: ${e.message}"
+						error "Failed to push Docker image to"
+					}
+				}
+			}
+		}
 	}
 }
